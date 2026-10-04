@@ -4,22 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Colour Management System</title>
+    <!-- Html2Canvas library for downloading order list as image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
-            --glass-bg: rgba(255, 255, 255, 0.82);
+            --glass-bg: rgba(255, 255, 255, 0.85);
             --glass-border: rgba(255, 255, 255, 0.95);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
+            --glass-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.07);
             --text-primary: #1d1d1f;
             --text-secondary: #86868b;
             --accent: #0071e3;
             --accent-gradient: linear-gradient(135deg, #0071e3 0%, #409eff 100%);
+            --danger-gradient: linear-gradient(135deg, #ff3b30 0%, #ff6860 100%);
+            --warning-gradient: linear-gradient(135deg, #ff9500 0%, #ffb13b 100%);
             --success: #34c759;
             --warning: #ff9500;
             --danger: #ff3b30;
-            --card-radius: 24px;
+            --card-radius: 26px;
             --element-radius: 14px;
-            --transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * {
@@ -138,8 +142,8 @@
         }
 
         .sync-btn {
-            background: rgba(0, 113, 227, 0.1);
-            border: none;
+            background: rgba(0, 113, 227, 0.08);
+            border: 1px solid rgba(0, 113, 227, 0.12);
             color: var(--accent);
             width: 36px;
             height: 36px;
@@ -152,9 +156,13 @@
             font-size: 14px;
         }
 
+        .sync-btn:hover {
+            background: rgba(0, 113, 227, 0.15);
+            transform: scale(1.05);
+        }
+
         .sync-btn:active {
             transform: scale(0.92);
-            background: rgba(0, 113, 227, 0.2);
         }
 
         .sync-btn.spinning {
@@ -171,22 +179,15 @@
             scroll-behavior: smooth;
         }
 
-        .app-content::-webkit-scrollbar {
-            width: 4px;
-        }
-        .app-content::-webkit-scrollbar-thumb {
-            background: rgba(0,0,0,0.1);
-            border-radius: 10px;
-        }
+        .app-content::-webkit-scrollbar { width: 4px; }
+        .app-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
 
         .view-section {
             display: none;
             animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .view-section.active {
-            display: block;
-        }
+        .view-section.active { display: block; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -222,21 +223,14 @@
             margin-bottom: 8px;
         }
 
-        .stat-card.total .icon-box { background: rgba(0, 113, 227, 0.15); color: var(--accent); }
-        .stat-card.low .icon-box { background: rgba(255, 149, 0, 0.15); color: var(--warning); }
-        .stat-card.purchase .icon-box { background: rgba(255, 59, 48, 0.15); color: var(--danger); }
+        .stat-card .icon-box svg { width: 14px; height: 14px; fill: currentColor; }
 
-        .stat-card h3 {
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
+        .stat-card.total .icon-box { background: rgba(0, 113, 227, 0.12); color: var(--accent); }
+        .stat-card.relative .icon-box { background: rgba(52, 199, 89, 0.12); color: var(--success); }
+        .stat-card.purchase .icon-box { background: rgba(255, 59, 48, 0.12); color: var(--danger); }
 
-        .stat-card p {
-            font-size: 10px;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
+        .stat-card h3 { font-size: 15px; font-weight: 700; letter-spacing: -0.5px; }
+        .stat-card p { font-size: 10px; color: var(--text-secondary); font-weight: 600; }
 
         .search-box {
             position: relative;
@@ -317,27 +311,72 @@
             background: #fff;
         }
 
-        .colour-swatch {
-            width: 38px;
-            height: 38px;
-            border-radius: 12px;
-            box-shadow: inset 0 2px 4px rgba(255,255,255,0.6), 0 4px 12px rgba(0,0,0,0.12);
+        .ink-tank-container {
+            width: 40px;
+            height: 58px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(180, 190, 205, 0.9);
+            border-radius: 10px;
             position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.06), 0 4px 10px rgba(0,0,0,0.05);
             flex-shrink: 0;
-            animation: liquidPulse 3.5s ease-in-out infinite alternate;
         }
 
-        @keyframes liquidPulse {
-            0% { transform: scale(1) rotate(0deg); border-radius: 12px; }
-            50% { transform: scale(1.08) rotate(4deg); border-radius: 16px 10px 18px 12px; }
-            100% { transform: scale(1) rotate(0deg); border-radius: 12px; }
+        .tank-cap {
+            position: absolute;
+            top: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 5px;
+            background: #555;
+            border-radius: 2px;
+            z-index: 10;
         }
 
-        .colour-info {
-            flex: 1;
-            min-width: 0;
+        .tank-fill-wrapper {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 2;
         }
 
+        .wave-svg {
+            position: absolute;
+            top: -12px;
+            left: 0;
+            width: 200%;
+            height: 14px;
+            animation: waveSlide 3s linear infinite;
+        }
+
+        @keyframes waveSlide {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .tank-liquid-body {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            box-shadow: inset 0 2px 5px rgba(255,255,255,0.4);
+        }
+
+        .tank-glass-shine {
+            position: absolute;
+            top: 0;
+            left: 4px;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 100%);
+            z-index: 8;
+            pointer-events: none;
+        }
+
+        .colour-info { flex: 1; min-width: 0; }
         .colour-info h4 {
             font-size: 13px;
             font-weight: 600;
@@ -357,14 +396,11 @@
             gap: 4px;
         }
 
-        .stock-indicator {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-        }
-        .stock-indicator.high { background: var(--success); }
-        .stock-indicator.medium { background: var(--warning); }
-        .stock-indicator.low { background: var(--danger); }
+        .stock-indicator { width: 6px; height: 6px; border-radius: 50%; }
+        .stock-indicator.highest { background: var(--success); }
+        .stock-indicator.higher { background: var(--accent); }
+        .stock-indicator.moderate { background: var(--warning); }
+        .stock-indicator.lower { background: var(--danger); }
 
         .console-card {
             background: var(--glass-bg);
@@ -375,10 +411,7 @@
             margin-bottom: 20px;
         }
 
-        .form-group {
-            margin-bottom: 16px;
-        }
-
+        .form-group { margin-bottom: 16px; }
         .form-group label {
             display: block;
             font-size: 11px;
@@ -407,50 +440,116 @@
             box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12);
         }
 
-        select.form-control {
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 16px center;
-            padding-right: 40px;
+        /* Modern Searchable Dropdown with Colour Swatch */
+        .custom-select-container { position: relative; }
+
+        .dropdown-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: var(--element-radius);
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 50;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
         }
 
-        .stepper-input {
+        .dropdown-results.show { display: block; }
+
+        .dropdown-item {
+            padding: 10px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+            transition: background 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(0, 113, 227, 0.08);
+            color: var(--accent);
+        }
+
+        .dropdown-item-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .colour-swatch-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 1px solid rgba(0,0,0,0.15);
+            box-shadow: inset 0 1px 3px rgba(255,255,255,0.4);
+            flex-shrink: 0;
+        }
+
+        /* Modern Stepper Quantity Controls (+ and - buttons) */
+        .qty-stepper {
             display: flex;
             align-items: center;
             background: rgba(255, 255, 255, 0.95);
-            border: 1px solid rgba(0,0,0,0.08);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: var(--element-radius);
             overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            transition: var(--transition);
         }
 
-        .stepper-input button {
+        .qty-stepper:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12);
+        }
+
+        .stepper-btn {
             background: transparent;
             border: none;
             width: 48px;
-            height: 44px;
-            font-size: 16px;
-            color: var(--accent);
+            height: 46px;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
             cursor: pointer;
-            transition: var(--transition);
-            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
         }
 
-        .stepper-input button:active {
-            background: rgba(0, 113, 227, 0.1);
+        .stepper-btn:hover {
+            background: rgba(0, 113, 227, 0.08);
+            color: var(--accent);
         }
 
-        .stepper-input input {
+        .stepper-btn:active { background: rgba(0, 113, 227, 0.15); }
+
+        .qty-stepper input {
             flex: 1;
             border: none;
-            text-align: center;
-            font-size: 16px;
-            font-weight: 600;
             background: transparent;
-            outline: none;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 600;
             color: var(--text-primary);
+            outline: none;
+            padding: 0;
         }
 
+        .qty-stepper input::-webkit-outer-spin-button,
+        .qty-stepper input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Sleek Minimal Unique Buttons */
         .action-btn {
             width: 100%;
             padding: 14px;
@@ -461,7 +560,7 @@
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0, 113, 227, 0.3);
+            box-shadow: 0 8px 20px rgba(0, 113, 227, 0.25);
             transition: var(--transition);
             display: flex;
             align-items: center;
@@ -469,19 +568,94 @@
             gap: 8px;
         }
 
-        .action-btn.out {
-            background: linear-gradient(135deg, #ff3b30 0%, #ff6860 100%);
-            box-shadow: 0 8px 20px rgba(255, 59, 48, 0.3);
-        }
+        .action-btn svg { width: 16px; height: 16px; fill: currentColor; }
 
-        .action-btn.order {
-            background: linear-gradient(135deg, #ff9500 0%, #ffb13b 100%);
-            box-shadow: 0 8px 20px rgba(255, 149, 0, 0.3);
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(0, 113, 227, 0.35);
         }
 
         .action-btn:active {
             transform: scale(0.97);
             opacity: 0.9;
+        }
+
+        .action-btn.out {
+            background: var(--danger-gradient);
+            box-shadow: 0 8px 20px rgba(255, 59, 48, 0.25);
+        }
+        .action-btn.out:hover {
+            box-shadow: 0 12px 25px rgba(255, 59, 48, 0.35);
+        }
+
+        .action-btn.order {
+            background: var(--warning-gradient);
+            box-shadow: 0 8px 20px rgba(255, 149, 0, 0.25);
+        }
+        .action-btn.order:hover {
+            box-shadow: 0 12px 25px rgba(255, 149, 0, 0.35);
+        }
+
+        .action-btn.secondary-action {
+            background: rgba(0, 113, 227, 0.1);
+            color: var(--accent);
+            box-shadow: none;
+            border: 1px solid rgba(0, 113, 227, 0.2);
+            margin-bottom: 12px;
+            font-size: 13px;
+            padding: 10px;
+        }
+        .action-btn.secondary-action:hover {
+            background: rgba(0, 113, 227, 0.18);
+            box-shadow: none;
+        }
+
+        /* Live Orders List styling */
+        .orders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .order-item-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.01);
+        }
+
+        .order-item-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .order-item-info h5 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .order-item-info p {
+            font-size: 10px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .order-qty-pill {
+            background: rgba(255, 149, 0, 0.12);
+            color: var(--warning);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
         }
 
         .ios-nav-bar {
@@ -531,9 +705,7 @@
             font-weight: 600;
         }
 
-        .nav-item.active svg {
-            transform: scale(1.1);
-        }
+        .nav-item.active svg { transform: scale(1.1); }
 
         .toast {
             position: absolute;
@@ -556,16 +728,8 @@
             white-space: nowrap;
         }
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .toast .dot-success {
-            width: 8px;
-            height: 8px;
-            background: var(--success);
-            border-radius: 50%;
-        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast .dot-success { width: 8px; height: 8px; background: var(--success); border-radius: 50%; }
 
         .creator-tag {
             text-align: center;
@@ -575,10 +739,7 @@
             font-weight: 500;
             letter-spacing: 0.2px;
         }
-        .creator-tag span {
-            font-weight: 600;
-            color: var(--accent);
-        }
+        .creator-tag span { font-weight: 600; color: var(--accent); }
     </style>
 </head>
 <body>
@@ -589,18 +750,18 @@
             <span id="current-time">7:41</span>
             <div class="dynamic-island">
                 <div class="dot"></div>
-                <span>Connected</span>
+                <span>Live Available Stock</span>
             </div>
             <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">
-                Secure Sync
+                Sync OK
             </div>
         </div>
 
         <!-- App Header -->
         <div class="app-header">
             <div class="app-title-area">
-                <h1>Colour Managment System</h1>
-                <p>Mobile Device Console</p>
+                <h1>Colour Management System</h1>
+                <p>Available Stock & Liquid Level</p>
             </div>
             <button class="sync-btn" id="sync-btn" onclick="fetchLiveStock()" title="Sync">
                 ↻
@@ -620,24 +781,30 @@
             <div id="view-dashboard" class="view-section active">
                 <div class="stats-grid">
                     <div class="stat-card total">
-                        <div class="icon-box">🎨</div>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 20.35c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l2.13-2.13C9.43 20.26 10.68 20.5 12 20.5c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7 z"/></svg>
+                        </div>
                         <div>
-                            <h3 id="stat-available-count">0</h3>
-                            <p>Available</p>
+                            <h3 id="stat-total-bottles">0</h3>
+                            <p>Total Bottles Qty</p>
                         </div>
                     </div>
-                    <div class="stat-card low">
-                        <div class="icon-box">⚠️</div>
+                    <div class="stat-card relative">
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+                        </div>
                         <div>
-                            <h3 id="stat-low-stock">0</h3>
-                            <p>Low Stock</p>
+                            <h3 id="stat-max-stock">0</h3>
+                            <p>Max Units</p>
                         </div>
                     </div>
                     <div class="stat-card purchase">
-                        <div class="icon-box">🛒</div>
+                        <div class="icon-box">
+                            <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                        </div>
                         <div>
                             <h3 id="stat-purchase-count">0</h3>
-                            <p>Need Purchase</p>
+                            <p>Below Average</p>
                         </div>
                     </div>
                 </div>
@@ -648,8 +815,8 @@
                 </div>
 
                 <div class="section-title">
-                    <span>In-Stock Colours</span>
-                    <span class="badge" id="colour-count-badge">0 Active</span>
+                    <span>Available Stock Only</span>
+                    <span class="badge" id="colour-count-badge">0 Available</span>
                 </div>
 
                 <div class="colour-dash-grid" id="dashboard-colour-grid">
@@ -668,25 +835,31 @@
                     </div>
                     <form onsubmit="handleStockIn(event)">
                         <div class="form-group">
-                            <label>Select Acrylic Colour</label>
-                            <select id="stock-in-select" class="form-control" required>
-                                <option value="" disabled selected>Choose colour...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Quantity to Add</label>
-                            <div class="stepper-input">
-                                <button type="button" onclick="adjustQty('stock-in-qty', -1)">−</button>
-                                <input type="number" id="stock-in-qty" value="1" min="1" required>
-                                <button type="button" onclick="adjustQty('stock-in-qty', 1)">+</button>
+                            <label>Search Acrylic Colour</label>
+                            <div class="custom-select-container">
+                                <input type="text" id="stock-in-search-input" class="form-control" placeholder="Type colour name..." autocomplete="off" oninput="filterStockInDropdown()" onfocus="showStockInDropdown()" required>
+                                <input type="hidden" id="stock-in-selected-value">
+                                <div id="stock-in-results" class="dropdown-results"></div>
                             </div>
                         </div>
+
+                        <div class="form-group">
+                            <label>Quantity to Add</label>
+                            <div class="qty-stepper">
+                                <button type="button" class="stepper-btn" onclick="adjustQty('stock-in-qty', -1)">−</button>
+                                <input type="number" id="stock-in-qty" value="1" min="1" required>
+                                <button type="button" class="stepper-btn" onclick="adjustQty('stock-in-qty', 1)">+</button>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label>Note / Purpose</label>
                             <input type="text" id="stock-in-note" class="form-control" placeholder="e.g. Shipment">
                         </div>
+
                         <button type="submit" class="action-btn">
-                            + Save Stock In
+                            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                            Save Stock In
                         </button>
                     </form>
                 </div>
@@ -702,25 +875,31 @@
                     </div>
                     <form onsubmit="handleStockOut(event)">
                         <div class="form-group">
-                            <label>Select Acrylic Colour</label>
-                            <select id="stock-out-select" class="form-control" required>
-                                <option value="" disabled selected>Choose colour...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Quantity to Issue</label>
-                            <div class="stepper-input">
-                                <button type="button" onclick="adjustQty('stock-out-qty', -1)">−</button>
-                                <input type="number" id="stock-out-qty" value="1" min="1" required>
-                                <button type="button" onclick="adjustQty('stock-out-qty', 1)">+</button>
+                            <label>Search Acrylic Colour</label>
+                            <div class="custom-select-container">
+                                <input type="text" id="stock-out-search-input" class="form-control" placeholder="Type colour name..." autocomplete="off" oninput="filterStockOutDropdown()" onfocus="showStockOutDropdown()" required>
+                                <input type="hidden" id="stock-out-selected-value">
+                                <div id="stock-out-results" class="dropdown-results"></div>
                             </div>
                         </div>
+
+                        <div class="form-group">
+                            <label>Quantity to Issue</label>
+                            <div class="qty-stepper">
+                                <button type="button" class="stepper-btn" onclick="adjustQty('stock-out-qty', -1)">−</button>
+                                <input type="number" id="stock-out-qty" value="1" min="1" required>
+                                <button type="button" class="stepper-btn" onclick="adjustQty('stock-out-qty', 1)">+</button>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label>Note / Purpose</label>
                             <input type="text" id="stock-out-note" class="form-control" placeholder="e.g. Project Usage">
                         </div>
+
                         <button type="submit" class="action-btn out">
-                            − Save Stock Out
+                            <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+                            Save Stock Out
                         </button>
                     </form>
                 </div>
@@ -732,39 +911,58 @@
                 <div class="console-card">
                     <div class="section-title" style="margin-bottom: 16px;">
                         <span>Order Colour</span>
-                        <span style="color: var(--warning); font-size: 18px;">🛒</span>
+                        <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: var(--warning);"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
                     </div>
                     <form onsubmit="handleOrder(event)">
                         <div class="form-group">
-                            <label>Select Colour to Order</label>
-                            <select id="order-select" class="form-control" required>
-                                <option value="" disabled selected>Choose colour...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Required Quantity</label>
-                            <div class="stepper-input">
-                                <button type="button" onclick="adjustQty('order-qty', -1)">−</button>
-                                <input type="number" id="order-qty" value="1" min="1" required>
-                                <button type="button" onclick="adjustQty('order-qty', 1)">+</button>
+                            <label>Search Colour to Order</label>
+                            <div class="custom-select-container">
+                                <input type="text" id="order-search-input" class="form-control" placeholder="Type colour name..." autocomplete="off" oninput="filterOrderDropdown()" onfocus="showOrderDropdown()" required>
+                                <input type="hidden" id="order-selected-value">
+                                <div id="order-results" class="dropdown-results"></div>
                             </div>
                         </div>
+
+                        <div class="form-group">
+                            <label>Required Quantity</label>
+                            <div class="qty-stepper">
+                                <button type="button" class="stepper-btn" onclick="adjustQty('order-qty', -1)">−</button>
+                                <input type="number" id="order-qty" value="1" min="1" required>
+                                <button type="button" class="stepper-btn" onclick="adjustQty('order-qty', 1)">+</button>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label>Note / Purpose</label>
                             <input type="text" id="order-note" class="form-control" placeholder="e.g. Restock Request">
                         </div>
+
                         <button type="submit" class="action-btn order">
-                            ✈ Save Order
+                            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                            Save Order
                         </button>
                     </form>
                 </div>
 
-                <div class="section-title">
-                    <span>Orders Log</span>
-                    <span class="badge" id="order-count-badge">Synced</span>
-                </div>
-                <div id="orders-list-container">
-                    <p style="text-align: center; color: var(--text-secondary); font-size: 13px; padding: 20px;">Orders saved directly to database.</p>
+                <!-- Active Orders Section with Download as Image Feature -->
+                <div class="console-card" style="margin-top: 16px;">
+                    <div class="section-title" style="margin-bottom: 12px;">
+                        <span>Active Orders List</span>
+                        <span class="badge" id="orders-count-badge">0 Orders</span>
+                    </div>
+
+                    <!-- Download as Image Button -->
+                    <button type="button" class="action-btn secondary-action" onclick="downloadOrdersAsImage()">
+                        <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: currentColor;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                        Download Orders List as Image
+                    </button>
+
+                    <!-- Printable/Capturable Card wrapper -->
+                    <div id="capturable-orders-card">
+                        <div class="orders-list" id="live-orders-container">
+                            <div style="text-align: center; padding: 15px; color: var(--text-secondary); font-size: 12px;">No active orders yet.</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="creator-tag">Made by <span>Darpan Sukla</span></div>
@@ -794,10 +992,9 @@
     </div>
 
     <script>
-        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPl-ouoIes1bzypD6Sn8nXvNMnItW52vvDH9ug_PZjiEDksVwr_HwGHmnHm4QU2_5NPdrcQ_1OYVRJ/pub?gid=1840810854&single=true&output=csv";
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxb9MvzQBMx7Luh-0Xo26hqETPzYPO1dShcJx0rKASDXwiXG-CEG0jPIDd1izBt6g85/exec";
-
         let allColoursData = [];
+        let liveOrdersData = [];
 
         const colourHexMap = {
             "white": "#f8f9fa", "primary yellow": "#ffd400", "lemon yellow": "#fff44f",
@@ -830,24 +1027,44 @@
             return color;
         }
 
+        function createRealWaveSvg(hexColor) {
+            return `
+                <svg class="wave-svg" viewBox="0 0 100 15" preserveAspectRatio="none">
+                    <path d="M0 5 Q 25 10, 50 5 T 100 5 V 15 H 0 Z" fill="${hexColor}" opacity="0.6"></path>
+                    <path d="M0 8 Q 25 3, 50 8 T 100 8 V 15 H 0 Z" fill="${hexColor}"></path>
+                </svg>
+            `;
+        }
+
         async function fetchLiveStock() {
             const syncBtn = document.getElementById('sync-btn');
             syncBtn.classList.add('spinning');
-            
             try {
                 const response = await fetch(`${APPS_SCRIPT_URL}?action=getStock`);
                 const data = await response.json();
                 allColoursData = data;
                 renderDashboard();
-                populateDropdowns();
-                showToast("Synced with database!");
+                populateSearchDropdownList('stock-in', allColoursData);
+                populateSearchDropdownList('stock-out', allColoursData);
+                populateSearchDropdownList('order', allColoursData);
+                
+                try {
+                    const orderRes = await fetch(`${APPS_SCRIPT_URL}?action=getOrders`);
+                    const orderData = await orderRes.json();
+                    if (Array.isArray(orderData)) {
+                        liveOrdersData = orderData;
+                        renderLiveOrders();
+                    }
+                } catch (e) {
+                    // Orders endpoint fallback
+                }
+
+                showToast("Stock synchronized!");
             } catch (error) {
                 console.warn("Connection error.", error);
                 showToast("Could not sync with database");
             } finally {
-                setTimeout(() => {
-                    syncBtn.classList.remove('spinning');
-                }, 600);
+                setTimeout(() => { syncBtn.classList.remove('spinning'); }, 600);
             }
         }
 
@@ -855,46 +1072,53 @@
             const grid = document.getElementById('dashboard-colour-grid');
             grid.innerHTML = "";
 
-            // Only show stock > 0 on dashboard
-            const availableColours = allColoursData.filter(c => c.stock > 0);
-            // Need purchase count (stock === 0 or stock < 5)
-            const needPurchase = allColoursData.filter(c => c.stock <= 5);
+            if (!allColoursData || allColoursData.length === 0) {
+                grid.innerHTML = `<div style="grid-column: span 2; text-align: center; padding: 30px; color: var(--text-secondary); font-size: 13px;">No stock data loaded yet.</div>`;
+                return;
+            }
 
-            const filtered = availableColours.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
-            
-            document.getElementById('stat-available-count').innerText = availableColours.length;
-            document.getElementById('stat-purchase-count').innerText = needPurchase.length;
-            document.getElementById('colour-count-badge').innerText = `${filtered.length} Active`;
+            const availableStockItems = allColoursData.filter(c => (Number(c.stock) || 0) > 0);
+            const stockValues = availableStockItems.map(c => Number(c.stock) || 0);
+            const totalBottles = stockValues.reduce((acc, val) => acc + val, 0);
+            const maxStock = Math.max(...stockValues, 1);
+            const minStock = stockValues.length > 0 ? Math.min(...stockValues) : 0;
+            const avgStock = stockValues.length > 0 ? stockValues.reduce((a, b) => a + b, 0) / stockValues.length : 0;
 
-            let lowStockCount = 0;
-            availableColours.forEach(c => { if (c.stock < 15) lowStockCount++; });
-            document.getElementById('stat-low-stock').innerText = lowStockCount;
+            const filtered = availableStockItems.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
+
+            document.getElementById('stat-total-bottles').innerText = totalBottles;
+            document.getElementById('stat-max-stock').innerText = maxStock;
+            document.getElementById('stat-purchase-count').innerText = availableStockItems.filter(c => (Number(c.stock) || 0) < avgStock).length;
+            document.getElementById('colour-count-badge').innerText = `${filtered.length} Available`;
 
             if (filtered.length === 0) {
-                grid.innerHTML = `<div style="grid-column: span 2; text-align: center; padding: 30px; color: var(--text-secondary); font-size: 13px;">No in-stock colours found. Add stock in the <b>Stock In</b> tab!</div>`;
+                grid.innerHTML = `<div style="grid-column: span 2; text-align: center; padding: 30px; color: var(--text-secondary); font-size: 13px;">No matching available stock.</div>`;
                 return;
             }
 
             filtered.forEach(c => {
+                const stockVal = Number(c.stock) || 0;
                 const hex = getColourHex(c.name);
-                let indicatorClass = 'high';
-                let statusText = `${c.stock} units`;
-                if (c.stock < 15) {
-                    indicatorClass = 'low';
-                    statusText = `${c.stock} (Low!)`;
-                } else if (c.stock < 30) {
-                    indicatorClass = 'medium';
-                }
+                const percentage = Math.min(Math.max(Math.round((stockVal / maxStock) * 100), 12), 100);
+
+                let indicatorClass = stockVal === maxStock ? 'highest' : (stockVal > avgStock ? 'higher' : (stockVal > minStock ? 'moderate' : 'lower'));
 
                 const card = document.createElement('div');
                 card.className = 'colour-card-mini';
                 card.innerHTML = `
-                    <div class="colour-swatch" style="background: ${hex};"></div>
+                    <div class="ink-tank-container">
+                        <div class="tank-cap"></div>
+                        <div class="tank-fill-wrapper" style="height: ${percentage}%;">
+                            ${createRealWaveSvg(hex)}
+                            <div class="tank-liquid-body" style="background: ${hex};"></div>
+                        </div>
+                        <div class="tank-glass-shine"></div>
+                    </div>
                     <div class="colour-info">
                         <h4>${c.name}</h4>
                         <div class="stock-badge">
                             <span class="stock-indicator ${indicatorClass}"></span>
-                            <span>${statusText}</span>
+                            <span>${stockVal} Bot (${percentage}%)</span>
                         </div>
                     </div>
                 `;
@@ -903,44 +1127,82 @@
         }
 
         function filterDashboard() {
-            const query = document.getElementById('dashboard-search').value;
-            renderDashboard(query);
+            renderDashboard(document.getElementById('dashboard-search').value);
         }
 
-        function populateDropdowns() {
-            const inSelect = document.getElementById('stock-in-select');
-            const outSelect = document.getElementById('stock-out-select');
-            const orderSelect = document.getElementById('order-select');
+        function populateSearchDropdownList(type, items) {
+            const container = document.getElementById(`${type}-results`);
+            if (!container) return;
+            container.innerHTML = items.map(c => {
+                const hex = getColourHex(c.name);
+                return `
+                    <div class="dropdown-item" onclick="selectColour('${type}', '${c.name}', ${c.stock})">
+                        <div class="dropdown-item-left">
+                            <div class="colour-swatch-dot" style="background: ${hex};"></div>
+                            <span>${c.name}</span>
+                        </div>
+                        <span style="color: var(--text-secondary); font-size: 11px;">Stock: ${c.stock}</span>
+                    </div>
+                `;
+            }).join('');
+        }
 
-            const optionsHTML = '<option value="" disabled selected>Choose colour...</option>' + 
-                allColoursData.map(c => `<option value="${c.name}">${c.name} (Stock: ${c.stock})</option>`).join('');
+        function showDropdown(type) {
+            const el = document.getElementById(`${type}-results`);
+            if (el) el.classList.add('show');
+        }
 
-            inSelect.innerHTML = optionsHTML;
-            outSelect.innerHTML = optionsHTML;
-            orderSelect.innerHTML = optionsHTML;
+        function filterDropdown(type) {
+            const inputEl = document.getElementById(`${type}-search-input`);
+            if (!inputEl) return;
+            const query = inputEl.value.toLowerCase();
+            const filtered = allColoursData.filter(c => c.name.toLowerCase().includes(query));
+            populateSearchDropdownList(type, filtered);
+            showDropdown(type);
+        }
+
+        function selectColour(type, name, stock) {
+            const searchInput = document.getElementById(`${type}-search-input`);
+            const selectedVal = document.getElementById(`${type}-selected-value`);
+            const resultsBox = document.getElementById(`${type}-results`);
+
+            if (searchInput) searchInput.value = `${name} (Stock: ${stock})`;
+            if (selectedVal) selectedVal.value = name;
+            if (resultsBox) resultsBox.classList.remove('show');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.custom-select-container')) {
+                document.querySelectorAll('.dropdown-results').forEach(el => el.classList.remove('show'));
+            }
+        });
+
+        function adjustQty(elementId, amount) {
+            const qtyInput = document.getElementById(elementId);
+            if (!qtyInput) return;
+            let currentVal = parseInt(qtyInput.value) || 1;
+            let newVal = currentVal + amount;
+            if (newVal < 1) newVal = 1;
+            qtyInput.value = newVal;
         }
 
         function switchTab(tabId, btnElement) {
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
-
             document.getElementById(`view-${tabId}`).classList.add('active');
             btnElement.classList.add('active');
         }
 
-        function adjustQty(elementId, amount) {
-            const input = document.getElementById(elementId);
-            let val = parseInt(input.value) || 0;
-            val += amount;
-            if (val < 1) val = 1;
-            input.value = val;
-        }
-
         async function handleStockIn(e) {
             e.preventDefault();
-            const colourName = document.getElementById('stock-in-select').value;
+            const colourName = document.getElementById('stock-in-selected-value').value || document.getElementById('stock-in-search-input').value;
             const qty = parseInt(document.getElementById('stock-in-qty').value);
             const note = document.getElementById('stock-in-note').value || "Stock In";
+
+            if (!colourName) {
+                showToast("Please select a valid colour");
+                return;
+            }
 
             showToast("Saving to database...");
             try {
@@ -951,6 +1213,7 @@
                 });
                 showToast(`Added +${qty} units of ${colourName}`);
                 e.target.reset();
+                document.getElementById('stock-in-selected-value').value = "";
                 document.getElementById('stock-in-qty').value = 1;
                 setTimeout(fetchLiveStock, 1500);
             } catch (err) {
@@ -960,11 +1223,16 @@
 
         async function handleStockOut(e) {
             e.preventDefault();
-            const colourName = document.getElementById('stock-out-select').value;
+            const colourName = document.getElementById('stock-out-selected-value').value || document.getElementById('stock-out-search-input').value;
             const qty = parseInt(document.getElementById('stock-out-qty').value);
             const note = document.getElementById('stock-out-note').value || "Stock Out";
 
-            const item = allColoursData.find(c => c.name === colourName);
+            if (!colourName) {
+                showToast("Please select a valid colour");
+                return;
+            }
+
+            const item = allColoursData.find(c => c.name.toLowerCase() === colourName.toLowerCase());
             if (item && item.stock < qty) {
                 showToast(`Error: Only ${item.stock} units available!`);
                 return;
@@ -979,6 +1247,7 @@
                 });
                 showToast(`Issued ${qty} units of ${colourName}`);
                 e.target.reset();
+                document.getElementById('stock-out-selected-value').value = "";
                 document.getElementById('stock-out-qty').value = 1;
                 setTimeout(fetchLiveStock, 1500);
             } catch (err) {
@@ -988,54 +1257,116 @@
 
         async function handleOrder(e) {
             e.preventDefault();
-            const colourName = document.getElementById('order-select').value;
+            const colourName = document.getElementById('order-selected-value').value || document.getElementById('order-search-input').value;
             const qty = parseInt(document.getElementById('order-qty').value);
-            const note = document.getElementById('order-note').value || "Purchase Order";
+            const note = document.getElementById('order-note').value || "Restock Request";
+
+            if (!colourName) {
+                showToast("Please select a valid colour to order");
+                return;
+            }
 
             showToast("Saving Order...");
             try {
                 await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
-                    body: JSON.svg ? '' : JSON.stringify({ action: "logOrder", name: colourName, qty: qty, note: note })
-                });
-                showToast(`Order saved for ${qty}x ${colourName}`);
-                e.target.reset();
-                document.getElementById('order-qty').value = 1;
-            } catch (err) {
-                // Fallback direct JSON stringify post
-                fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
                     body: JSON.stringify({ action: "logOrder", name: colourName, qty: qty, note: note })
                 });
+                
+                liveOrdersData.unshift({ name: colourName, qty: qty, note: note, date: new Date().toLocaleDateString() });
+                renderLiveOrders();
+
                 showToast(`Order saved for ${qty}x ${colourName}`);
                 e.target.reset();
+                document.getElementById('order-selected-value').value = "";
+                document.getElementById('order-qty').value = 1;
+            } catch (err) {
+                liveOrdersData.unshift({ name: colourName, qty: qty, note: note, date: new Date().toLocaleDateString() });
+                renderLiveOrders();
+                showToast(`Order saved for ${qty}x ${colourName}`);
+                e.target.reset();
+                document.getElementById('order-selected-value').value = "";
                 document.getElementById('order-qty').value = 1;
             }
+        }
+
+        function renderLiveOrders() {
+            const container = document.getElementById('live-orders-container');
+            const badge = document.getElementById('orders-count-badge');
+            if (!container) return;
+
+            badge.innerText = `${liveOrdersData.length} Orders`;
+
+            if (liveOrdersData.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 15px; color: var(--text-secondary); font-size: 12px;">No active orders yet.</div>`;
+                return;
+            }
+
+            container.innerHTML = liveOrdersData.map(o => {
+                const hex = getColourHex(o.name);
+                return `
+                    <div class="order-item-card">
+                        <div class="order-item-left">
+                            <div class="colour-swatch-dot" style="background: ${hex};"></div>
+                            <div class="order-item-info">
+                                <h5>${o.name}</h5>
+                                <p>${o.note || 'Restock Request'} • ${o.date || 'Today'}</p>
+                            </div>
+                        </div>
+                        <div class="order-qty-pill">+${o.qty}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Function to download active orders list as image using html2canvas
+        function downloadOrdersAsImage() {
+            const targetElement = document.getElementById('capturable-orders-card');
+            if (!targetElement) return;
+
+            showToast("Generating image...");
+            html2canvas(targetElement, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: "#f5f7fa"
+            }).then(canvas => {
+                const imageURL = canvas.toDataURL("image/png");
+                const downloadLink = document.createElement('a');
+                downloadLink.href = imageURL;
+                downloadLink.download = `Active-Orders-${new Date().toISOString().slice(0,10)}.png`;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                showToast("Orders list downloaded!");
+            }).catch(err => {
+                console.error(err);
+                showToast("Failed to generate image");
+            });
         }
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-msg').innerText = msg;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
+
+        function filterStockInDropdown() { filterDropdown('stock-in'); }
+        function showStockInDropdown() { showDropdown('stock-in'); }
+        function filterStockOutDropdown() { filterDropdown('stock-out'); }
+        function showStockOutDropdown() { showDropdown('stock-out'); }
+        function filterOrderDropdown() { filterDropdown('order'); }
+        function showOrderDropdown() { showDropdown('order'); }
 
         function updateClock() {
             const now = new Date();
-            let hours = now.getHours();
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById('current-time').innerText = `${hours}:${minutes}`;
+            document.getElementById('current-time').innerText = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        window.onload = () => {
-            fetchLiveStock();
-        };
+        window.onload = () => { fetchLiveStock(); };
     </script>
 </body>
 </html>
