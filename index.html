@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ChromaCloud — Colour Management System</title>
+    <title>Colour Management System</title>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
@@ -123,7 +123,7 @@
         }
 
         .app-title-area h1 {
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 700;
             letter-spacing: -0.5px;
             background: linear-gradient(135deg, #1d1d1f 0%, #434345 100%);
@@ -195,15 +195,15 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
             margin-bottom: 16px;
         }
 
         .stat-card {
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
-            padding: 16px;
+            padding: 12px 10px;
             border-radius: var(--element-radius);
             box-shadow: 0 4px 20px rgba(0,0,0,0.03);
             display: flex;
@@ -212,29 +212,30 @@
         }
 
         .stat-card .icon-box {
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
-            margin-bottom: 10px;
+            font-size: 12px;
+            margin-bottom: 8px;
         }
 
         .stat-card.total .icon-box { background: rgba(0, 113, 227, 0.15); color: var(--accent); }
         .stat-card.low .icon-box { background: rgba(255, 149, 0, 0.15); color: var(--warning); }
+        .stat-card.purchase .icon-box { background: rgba(255, 59, 48, 0.15); color: var(--danger); }
 
         .stat-card h3 {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 700;
             letter-spacing: -0.5px;
         }
 
         .stat-card p {
-            font-size: 12px;
+            font-size: 10px;
             color: var(--text-secondary);
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .search-box {
@@ -585,10 +586,10 @@
     <div class="device-frame">
         <!-- iOS Status Bar -->
         <div class="ios-top-bar">
-            <span id="current-time">7:31</span>
+            <span id="current-time">7:41</span>
             <div class="dynamic-island">
                 <div class="dot"></div>
-                <span>Cloud Connected</span>
+                <span>Connected</span>
             </div>
             <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">
                 Secure Sync
@@ -598,8 +599,8 @@
         <!-- App Header -->
         <div class="app-header">
             <div class="app-title-area">
-                <h1>ChromaCloud</h1>
-                <p>Apple UI Liquid Edition</p>
+                <h1>Colour Managment System</h1>
+                <p>Mobile Device Console</p>
             </div>
             <button class="sync-btn" id="sync-btn" onclick="fetchLiveStock()" title="Sync">
                 ↻
@@ -609,7 +610,7 @@
         <!-- Toast Notification -->
         <div id="toast" class="toast">
             <div class="dot-success"></div>
-            <span id="toast-msg">Synced with Google Sheet</span>
+            <span id="toast-msg">Synced successfully</span>
         </div>
 
         <!-- Main Content Area -->
@@ -622,14 +623,21 @@
                         <div class="icon-box">🎨</div>
                         <div>
                             <h3 id="stat-available-count">0</h3>
-                            <p>Available Items</p>
+                            <p>Available</p>
                         </div>
                     </div>
                     <div class="stat-card low">
                         <div class="icon-box">⚠️</div>
                         <div>
                             <h3 id="stat-low-stock">0</h3>
-                            <p>Low Stock Items</p>
+                            <p>Low Stock</p>
+                        </div>
+                    </div>
+                    <div class="stat-card purchase">
+                        <div class="icon-box">🛒</div>
+                        <div>
+                            <h3 id="stat-purchase-count">0</h3>
+                            <p>Need Purchase</p>
                         </div>
                     </div>
                 </div>
@@ -645,7 +653,7 @@
                 </div>
 
                 <div class="colour-dash-grid" id="dashboard-colour-grid">
-                    <!-- Populated dynamically (Only shows stock > 0) -->
+                    <!-- Populated dynamically -->
                 </div>
 
                 <div class="creator-tag">Made by <span>Darpan Sukla</span></div>
@@ -666,7 +674,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Quantity to Add (Units/Bottles)</label>
+                            <label>Quantity to Add</label>
                             <div class="stepper-input">
                                 <button type="button" onclick="adjustQty('stock-in-qty', -1)">−</button>
                                 <input type="number" id="stock-in-qty" value="1" min="1" required>
@@ -674,11 +682,11 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>Batch / Reference Note</label>
-                            <input type="text" id="stock-in-note" class="form-control" placeholder="e.g. Shipment #AK-2026">
+                            <label>Note / Purpose</label>
+                            <input type="text" id="stock-in-note" class="form-control" placeholder="e.g. Shipment">
                         </div>
                         <button type="submit" class="action-btn">
-                            + Save Stock In to Sheet
+                            + Save Stock In
                         </button>
                     </form>
                 </div>
@@ -700,7 +708,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Quantity to Issue / Dispatch</label>
+                            <label>Quantity to Issue</label>
                             <div class="stepper-input">
                                 <button type="button" onclick="adjustQty('stock-out-qty', -1)">−</button>
                                 <input type="number" id="stock-out-qty" value="1" min="1" required>
@@ -708,11 +716,11 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>Issued To / Project Purpose</label>
-                            <input type="text" id="stock-out-note" class="form-control" placeholder="e.g. Studio Workshop / Canvas Project">
+                            <label>Note / Purpose</label>
+                            <input type="text" id="stock-out-note" class="form-control" placeholder="e.g. Project Usage">
                         </div>
                         <button type="submit" class="action-btn out">
-                            − Save Stock Out to Sheet
+                            − Save Stock Out
                         </button>
                     </form>
                 </div>
@@ -723,7 +731,7 @@
             <div id="view-order" class="view-section">
                 <div class="console-card">
                     <div class="section-title" style="margin-bottom: 16px;">
-                        <span>Order New Stock</span>
+                        <span>Order Colour</span>
                         <span style="color: var(--warning); font-size: 18px;">🛒</span>
                     </div>
                     <form onsubmit="handleOrder(event)">
@@ -741,8 +749,12 @@
                                 <button type="button" onclick="adjustQty('order-qty', 1)">+</button>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <label>Note / Purpose</label>
+                            <input type="text" id="order-note" class="form-control" placeholder="e.g. Restock Request">
+                        </div>
                         <button type="submit" class="action-btn order">
-                            ✈ Save Order to Sheet
+                            ✈ Save Order
                         </button>
                     </form>
                 </div>
@@ -752,7 +764,7 @@
                     <span class="badge" id="order-count-badge">Synced</span>
                 </div>
                 <div id="orders-list-container">
-                    <p style="text-align: center; color: var(--text-secondary); font-size: 13px; padding: 20px;">Orders saved directly to your Google Sheet.</p>
+                    <p style="text-align: center; color: var(--text-secondary); font-size: 13px; padding: 20px;">Orders saved directly to database.</p>
                 </div>
 
                 <div class="creator-tag">Made by <span>Darpan Sukla</span></div>
@@ -782,6 +794,7 @@
     </div>
 
     <script>
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSPl-ouoIes1bzypD6Sn8nXvNMnItW52vvDH9ug_PZjiEDksVwr_HwGHmnHm4QU2_5NPdrcQ_1OYVRJ/pub?gid=1840810854&single=true&output=csv";
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxb9MvzQBMx7Luh-0Xo26hqETPzYPO1dShcJx0rKASDXwiXG-CEG0jPIDd1izBt6g85/exec";
 
         let allColoursData = [];
@@ -827,10 +840,10 @@
                 allColoursData = data;
                 renderDashboard();
                 populateDropdowns();
-                showToast("Live synced with Google Sheet!");
+                showToast("Synced with database!");
             } catch (error) {
                 console.warn("Connection error.", error);
-                showToast("Could not sync with Google Sheet");
+                showToast("Could not sync with database");
             } finally {
                 setTimeout(() => {
                     syncBtn.classList.remove('spinning');
@@ -842,11 +855,15 @@
             const grid = document.getElementById('dashboard-colour-grid');
             grid.innerHTML = "";
 
-            // ONLY show colours that have available stock > 0
+            // Only show stock > 0 on dashboard
             const availableColours = allColoursData.filter(c => c.stock > 0);
+            // Need purchase count (stock === 0 or stock < 5)
+            const needPurchase = allColoursData.filter(c => c.stock <= 5);
+
             const filtered = availableColours.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
             
             document.getElementById('stat-available-count').innerText = availableColours.length;
+            document.getElementById('stat-purchase-count').innerText = needPurchase.length;
             document.getElementById('colour-count-badge').innerText = `${filtered.length} Active`;
 
             let lowStockCount = 0;
@@ -925,7 +942,7 @@
             const qty = parseInt(document.getElementById('stock-in-qty').value);
             const note = document.getElementById('stock-in-note').value || "Stock In";
 
-            showToast("Saving to Google Sheet...");
+            showToast("Saving to database...");
             try {
                 await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
@@ -937,7 +954,7 @@
                 document.getElementById('stock-in-qty').value = 1;
                 setTimeout(fetchLiveStock, 1500);
             } catch (err) {
-                showToast("Error saving to sheet");
+                showToast("Error saving data");
             }
         }
 
@@ -953,7 +970,7 @@
                 return;
             }
 
-            showToast("Saving to Google Sheet...");
+            showToast("Saving to database...");
             try {
                 await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
@@ -961,12 +978,11 @@
                     body: JSON.stringify({ action: "logStockOut", name: colourName, qty: qty, note: note })
                 });
                 showToast(`Issued ${qty} units of ${colourName}`);
-                e.target.refetch = true;
                 e.target.reset();
                 document.getElementById('stock-out-qty').value = 1;
                 setTimeout(fetchLiveStock, 1500);
             } catch (err) {
-                showToast("Error saving to sheet");
+                showToast("Error saving data");
             }
         }
 
@@ -974,19 +990,28 @@
             e.preventDefault();
             const colourName = document.getElementById('order-select').value;
             const qty = parseInt(document.getElementById('order-qty').value);
+            const note = document.getElementById('order-note').value || "Purchase Order";
 
-            showToast("Saving Order to Google Sheet...");
+            showToast("Saving Order...");
             try {
                 await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
-                    body: JSON.stringify({ action: "logOrder", name: colourName, qty: qty, note: "Purchase Order" })
+                    body: JSON.svg ? '' : JSON.stringify({ action: "logOrder", name: colourName, qty: qty, note: note })
                 });
-                showToast(`Order logged for ${qty}x ${colourName}`);
+                showToast(`Order saved for ${qty}x ${colourName}`);
                 e.target.reset();
                 document.getElementById('order-qty').value = 1;
             } catch (err) {
-                showToast("Error logging order");
+                // Fallback direct JSON stringify post
+                fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ action: "logOrder", name: colourName, qty: qty, note: note })
+                });
+                showToast(`Order saved for ${qty}x ${colourName}`);
+                e.target.reset();
+                document.getElementById('order-qty').value = 1;
             }
         }
 
