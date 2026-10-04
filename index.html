@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ChromaCloud — Colour Management System</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            --glass-bg: rgba(255, 255, 255, 0.82);
+            --glass-border: rgba(255, 255, 255, 0.95);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent: #0071e3;
+            --accent-gradient: linear-gradient(135deg, #0071e3 0%, #409eff 100%);
+            --success: #34c759;
+            --warning: #ff9500;
+            --danger: #ff3b30;
+            --card-radius: 24px;
+            --element-radius: 14px;
+            --transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 0;
+        }
+
+        .device-frame {
+            width: 100%;
+            max-width: 430px;
+            height: 100vh;
+            max-height: 932px;
+            background: rgba(248, 249, 252, 0.95);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 12px #1e1e24;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (min-width: 431px) {
+            .device-frame {
+                border-radius: 48px;
+                height: 90vh;
+                border: 2px solid rgba(255, 255, 255, 0.6);
+            }
+        }
+
+        .ios-top-bar {
+            height: 44px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            z-index: 100;
+        }
+
+        .dynamic-island {
+            width: 130px;
+            height: 28px;
+            background: #000;
+            border-radius: 20px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 500;
+            gap: 6px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .dynamic-island .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(52, 199, 89, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+        }
+
+        .app-header {
+            padding: 12px 20px 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            z-index: 10;
+        }
+
+        .app-title-area h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #1d1d1f 0%, #434345 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .app-title-area p {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .sync-btn {
+            background: rgba(0, 113, 227, 0.1);
+            border: none;
+            color: var(--accent);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .sync-btn:active {
+            transform: scale(0.92);
+            background: rgba(0, 113, 227, 0.2);
+        }
+
+        .sync-btn.spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .app-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px 100px 20px;
+            position: relative;
+            scroll-behavior: smooth;
+        }
+
+        .app-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .app-content::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 16px;
+            border-radius: var(--element-radius);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .stat-card .icon-box {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card.total .icon-box { background: rgba(0, 113, 227, 0.15); color: var(--accent); }
+        .stat-card.low .icon-box { background: rgba(255, 149, 0, 0.15); color: var(--warning); }
+
+        .stat-card h3 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-card p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 42px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: var(--element-radius);
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: var(--transition);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12);
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 15px;
+            height: 15px;
+            fill: var(--text-secondary);
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: -0.3px;
+        }
+
+        .section-title span.badge {
+            font-size: 11px;
+            background: rgba(0, 113, 227, 0.1);
+            color: var(--accent);
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .colour-dash-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .colour-card-mini {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--element-radius);
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .colour-card-mini:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+            background: #fff;
+        }
+
+        .colour-swatch {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.6), 0 4px 12px rgba(0,0,0,0.12);
+            position: relative;
+            flex-shrink: 0;
+            animation: liquidPulse 3.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes liquidPulse {
+            0% { transform: scale(1) rotate(0deg); border-radius: 12px; }
+            50% { transform: scale(1.08) rotate(4deg); border-radius: 16px 10px 18px 12px; }
+            100% { transform: scale(1) rotate(0deg); border-radius: 12px; }
+        }
+
+        .colour-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .colour-info h4 {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-primary);
+        }
+
+        .colour-info .stock-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stock-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .stock-indicator.high { background: var(--success); }
+        .stock-indicator.medium { background: var(--warning); }
+        .stock-indicator.low { background: var(--danger); }
+
+        .console-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--card-radius);
+            padding: 20px;
+            box-shadow: var(--glass-shadow);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: var(--element-radius);
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12);
+        }
+
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+
+        .stepper-input {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: var(--element-radius);
+            overflow: hidden;
+        }
+
+        .stepper-input button {
+            background: transparent;
+            border: none;
+            width: 48px;
+            height: 44px;
+            font-size: 16px;
+            color: var(--accent);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 700;
+        }
+
+        .stepper-input button:active {
+            background: rgba(0, 113, 227, 0.1);
+        }
+
+        .stepper-input input {
+            flex: 1;
+            border: none;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            background: transparent;
+            outline: none;
+            color: var(--text-primary);
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            border-radius: var(--element-radius);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0, 113, 227, 0.3);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn.out {
+            background: linear-gradient(135deg, #ff3b30 0%, #ff6860 100%);
+            box-shadow: 0 8px 20px rgba(255, 59, 48, 0.3);
+        }
+
+        .action-btn.order {
+            background: linear-gradient(135deg, #ff9500 0%, #ffb13b 100%);
+            box-shadow: 0 8px 20px rgba(255, 149, 0, 0.3);
+        }
+
+        .action-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+
+        .ios-nav-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 78px;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 10px 16px 10px;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
+            padding: 6px 0;
+            border-radius: 12px;
+        }
+
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            margin-bottom: 4px;
+            fill: currentColor;
+            transition: var(--transition);
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .nav-item.active svg {
+            transform: scale(1.1);
+        }
+
+        .toast {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(0, 0, 0, 0.88);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast .dot-success {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+        }
+
+        .creator-tag {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            padding: 14px 0 4px 0;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+        }
+        .creator-tag span {
+            font-weight: 600;
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="device-frame">
+        <!-- iOS Status Bar -->
+        <div class="ios-top-bar">
+            <span id="current-time">7:31</span>
+            <div class="dynamic-island">
+                <div class="dot"></div>
+                <span>Cloud Connected</span>
+            </div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">
+                Secure Sync
+            </div>
+        </div>
+
+        <!-- App Header -->
+        <div class="app-header">
+            <div class="app-title-area">
+                <h1>ChromaCloud</h1>
+                <p>Apple UI Liquid Edition</p>
+            </div>
+            <button class="sync-btn" id="sync-btn" onclick="fetchLiveStock()" title="Sync">
+                ↻
+            </button>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="toast">
+            <div class="dot-success"></div>
+            <span id="toast-msg">Synced with Google Sheet</span>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="app-content">
+
+            <!-- TAB 1: DASHBOARD -->
+            <div id="view-dashboard" class="view-section active">
+                <div class="stats-grid">
+                    <div class="stat-card total">
+                        <div class="icon-box">🎨</div>
+                        <div>
+                            <h3 id="stat-available-count">0</h3>
+                            <p>Available Items</p>
+                        </div>
+                    </div>
+                    <div class="stat-card low">
+                        <div class="icon-box">⚠️</div>
+                        <div>
+                            <h3 id="stat-low-stock">0</h3>
+                            <p>Low Stock Items</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    <input type="text" id="dashboard-search" placeholder="Search available colours..." oninput="filterDashboard()">
+                </div>
+
+                <div class="section-title">
+                    <span>In-Stock Colours</span>
+                    <span class="badge" id="colour-count-badge">0 Active</span>
+                </div>
+
+                <div class="colour-dash-grid" id="dashboard-colour-grid">
+                    <!-- Populated dynamically (Only shows stock > 0) -->
+                </div>
+
+                <div class="creator-tag">Made by <span>Darpan Sukla</span></div>
+            </div>
+
+            <!-- TAB 2: STOCK IN -->
+            <div id="view-stock-in" class="view-section">
+                <div class="console-card">
+                    <div class="section-title" style="margin-bottom: 16px;">
+                        <span>Stock In Console</span>
+                        <span style="color: var(--success); font-size: 18px;">↓</span>
+                    </div>
+                    <form onsubmit="handleStockIn(event)">
+                        <div class="form-group">
+                            <label>Select Acrylic Colour</label>
+                            <select id="stock-in-select" class="form-control" required>
+                                <option value="" disabled selected>Choose colour...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity to Add (Units/Bottles)</label>
+                            <div class="stepper-input">
+                                <button type="button" onclick="adjustQty('stock-in-qty', -1)">−</button>
+                                <input type="number" id="stock-in-qty" value="1" min="1" required>
+                                <button type="button" onclick="adjustQty('stock-in-qty', 1)">+</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Batch / Reference Note</label>
+                            <input type="text" id="stock-in-note" class="form-control" placeholder="e.g. Shipment #AK-2026">
+                        </div>
+                        <button type="submit" class="action-btn">
+                            + Save Stock In to Sheet
+                        </button>
+                    </form>
+                </div>
+                <div class="creator-tag">Made by <span>Darpan Sukla</span></div>
+            </div>
+
+            <!-- TAB 3: STOCK OUT -->
+            <div id="view-stock-out" class="view-section">
+                <div class="console-card">
+                    <div class="section-title" style="margin-bottom: 16px;">
+                        <span>Stock Out Console</span>
+                        <span style="color: var(--danger); font-size: 18px;">↑</span>
+                    </div>
+                    <form onsubmit="handleStockOut(event)">
+                        <div class="form-group">
+                            <label>Select Acrylic Colour</label>
+                            <select id="stock-out-select" class="form-control" required>
+                                <option value="" disabled selected>Choose colour...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity to Issue / Dispatch</label>
+                            <div class="stepper-input">
+                                <button type="button" onclick="adjustQty('stock-out-qty', -1)">−</button>
+                                <input type="number" id="stock-out-qty" value="1" min="1" required>
+                                <button type="button" onclick="adjustQty('stock-out-qty', 1)">+</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Issued To / Project Purpose</label>
+                            <input type="text" id="stock-out-note" class="form-control" placeholder="e.g. Studio Workshop / Canvas Project">
+                        </div>
+                        <button type="submit" class="action-btn out">
+                            − Save Stock Out to Sheet
+                        </button>
+                    </form>
+                </div>
+                <div class="creator-tag">Made by <span>Darpan Sukla</span></div>
+            </div>
+
+            <!-- TAB 4: ORDER COLOUR -->
+            <div id="view-order" class="view-section">
+                <div class="console-card">
+                    <div class="section-title" style="margin-bottom: 16px;">
+                        <span>Order New Stock</span>
+                        <span style="color: var(--warning); font-size: 18px;">🛒</span>
+                    </div>
+                    <form onsubmit="handleOrder(event)">
+                        <div class="form-group">
+                            <label>Select Colour to Order</label>
+                            <select id="order-select" class="form-control" required>
+                                <option value="" disabled selected>Choose colour...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Required Quantity</label>
+                            <div class="stepper-input">
+                                <button type="button" onclick="adjustQty('order-qty', -1)">−</button>
+                                <input type="number" id="order-qty" value="1" min="1" required>
+                                <button type="button" onclick="adjustQty('order-qty', 1)">+</button>
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn order">
+                            ✈ Save Order to Sheet
+                        </button>
+                    </form>
+                </div>
+
+                <div class="section-title">
+                    <span>Orders Log</span>
+                    <span class="badge" id="order-count-badge">Synced</span>
+                </div>
+                <div id="orders-list-container">
+                    <p style="text-align: center; color: var(--text-secondary); font-size: 13px; padding: 20px;">Orders saved directly to your Google Sheet.</p>
+                </div>
+
+                <div class="creator-tag">Made by <span>Darpan Sukla</span></div>
+            </div>
+
+        </div>
+
+        <!-- iOS Bottom Navigation Bar -->
+        <div class="ios-nav-bar">
+            <button class="nav-item active" onclick="switchTab('dashboard', this)">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                <span>Dashboard</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('stock-in', this)">
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                <span>Stock In</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('stock-out', this)">
+                <svg viewBox="0 0 24 24"><path d="M5 15h4v6h6v-6h4l-7-7-7 7zM19 4v2H5V4h14z"/></svg>
+                <span>Stock Out</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('order', this)">
+                <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                <span>Order</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxb9MvzQBMx7Luh-0Xo26hqETPzYPO1dShcJx0rKASDXwiXG-CEG0jPIDd1izBt6g85/exec";
+
+        let allColoursData = [];
+
+        const colourHexMap = {
+            "white": "#f8f9fa", "primary yellow": "#ffd400", "lemon yellow": "#fff44f",
+            "yellow ochre": "#cc7722", "chrome yellow": "#ffa700", "cadmium orange": "#ed872d",
+            "orange": "#ff7f00", "vermilion": "#e34234", "scarlet red": "#ff2400",
+            "crimson red": "#dc143c", "magenta": "#ff00ff", "rose": "#ff007f",
+            "pink": "#ffc0cb", "peach": "#ffdab9", "light brown": "#b5651d",
+            "dark brown": "#5c4033", "red oxide": "#6e2c00", "yellow oxide": "#d4af37",
+            "light green": "#90ee90", "sap green": "#507d2a", "viridian green": "#008080",
+            "olive green": "#808000", "leaf green": "#228b22", "light blue": "#add8e6",
+            "sky blue": "#87ceeb", "cobalt blue": "#0047ab", "ultramarine blue": "#120a8f",
+            "prussian blue": "#003153", "deep blue": "#00008b", "navy blue": "#000080",
+            "indigo": "#4b0082", "violet": "#8f00ff", "deep purple": "#36013f",
+            "lavender": "#e6e6fa", "lilac": "#c8a2c8", "mauve": "#e0b0ff",
+            "grey": "#808080", "black": "#1a1a1a", "silver": "#c0c0c0", "gold": "#ffd700"
+        };
+
+        function getColourHex(name) {
+            const key = name.trim().toLowerCase();
+            if (colourHexMap[key]) return colourHexMap[key];
+            let hash = 0;
+            for (let i = 0; i < key.length; i++) {
+                hash = key.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            let color = '#';
+            for (let i = 0; i < 3; i++) {
+                let value = (hash >> (i * 8)) & 0xFF;
+                color += ('00' + value.toString(16)).substr(-2);
+            }
+            return color;
+        }
+
+        async function fetchLiveStock() {
+            const syncBtn = document.getElementById('sync-btn');
+            syncBtn.classList.add('spinning');
+            
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=getStock`);
+                const data = await response.json();
+                allColoursData = data;
+                renderDashboard();
+                populateDropdowns();
+                showToast("Live synced with Google Sheet!");
+            } catch (error) {
+                console.warn("Connection error.", error);
+                showToast("Could not sync with Google Sheet");
+            } finally {
+                setTimeout(() => {
+                    syncBtn.classList.remove('spinning');
+                }, 600);
+            }
+        }
+
+        function renderDashboard(filter = "") {
+            const grid = document.getElementById('dashboard-colour-grid');
+            grid.innerHTML = "";
+
+            // ONLY show colours that have available stock > 0
+            const availableColours = allColoursData.filter(c => c.stock > 0);
+            const filtered = availableColours.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
+            
+            document.getElementById('stat-available-count').innerText = availableColours.length;
+            document.getElementById('colour-count-badge').innerText = `${filtered.length} Active`;
+
+            let lowStockCount = 0;
+            availableColours.forEach(c => { if (c.stock < 15) lowStockCount++; });
+            document.getElementById('stat-low-stock').innerText = lowStockCount;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div style="grid-column: span 2; text-align: center; padding: 30px; color: var(--text-secondary); font-size: 13px;">No in-stock colours found. Add stock in the <b>Stock In</b> tab!</div>`;
+                return;
+            }
+
+            filtered.forEach(c => {
+                const hex = getColourHex(c.name);
+                let indicatorClass = 'high';
+                let statusText = `${c.stock} units`;
+                if (c.stock < 15) {
+                    indicatorClass = 'low';
+                    statusText = `${c.stock} (Low!)`;
+                } else if (c.stock < 30) {
+                    indicatorClass = 'medium';
+                }
+
+                const card = document.createElement('div');
+                card.className = 'colour-card-mini';
+                card.innerHTML = `
+                    <div class="colour-swatch" style="background: ${hex};"></div>
+                    <div class="colour-info">
+                        <h4>${c.name}</h4>
+                        <div class="stock-badge">
+                            <span class="stock-indicator ${indicatorClass}"></span>
+                            <span>${statusText}</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterDashboard() {
+            const query = document.getElementById('dashboard-search').value;
+            renderDashboard(query);
+        }
+
+        function populateDropdowns() {
+            const inSelect = document.getElementById('stock-in-select');
+            const outSelect = document.getElementById('stock-out-select');
+            const orderSelect = document.getElementById('order-select');
+
+            const optionsHTML = '<option value="" disabled selected>Choose colour...</option>' + 
+                allColoursData.map(c => `<option value="${c.name}">${c.name} (Stock: ${c.stock})</option>`).join('');
+
+            inSelect.innerHTML = optionsHTML;
+            outSelect.innerHTML = optionsHTML;
+            orderSelect.innerHTML = optionsHTML;
+        }
+
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(`view-${tabId}`).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        function adjustQty(elementId, amount) {
+            const input = document.getElementById(elementId);
+            let val = parseInt(input.value) || 0;
+            val += amount;
+            if (val < 1) val = 1;
+            input.value = val;
+        }
+
+        async function handleStockIn(e) {
+            e.preventDefault();
+            const colourName = document.getElementById('stock-in-select').value;
+            const qty = parseInt(document.getElementById('stock-in-qty').value);
+            const note = document.getElementById('stock-in-note').value || "Stock In";
+
+            showToast("Saving to Google Sheet...");
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ action: "logStockIn", name: colourName, qty: qty, note: note })
+                });
+                showToast(`Added +${qty} units of ${colourName}`);
+                e.target.reset();
+                document.getElementById('stock-in-qty').value = 1;
+                setTimeout(fetchLiveStock, 1500);
+            } catch (err) {
+                showToast("Error saving to sheet");
+            }
+        }
+
+        async function handleStockOut(e) {
+            e.preventDefault();
+            const colourName = document.getElementById('stock-out-select').value;
+            const qty = parseInt(document.getElementById('stock-out-qty').value);
+            const note = document.getElementById('stock-out-note').value || "Stock Out";
+
+            const item = allColoursData.find(c => c.name === colourName);
+            if (item && item.stock < qty) {
+                showToast(`Error: Only ${item.stock} units available!`);
+                return;
+            }
+
+            showToast("Saving to Google Sheet...");
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ action: "logStockOut", name: colourName, qty: qty, note: note })
+                });
+                showToast(`Issued ${qty} units of ${colourName}`);
+                e.target.refetch = true;
+                e.target.reset();
+                document.getElementById('stock-out-qty').value = 1;
+                setTimeout(fetchLiveStock, 1500);
+            } catch (err) {
+                showToast("Error saving to sheet");
+            }
+        }
+
+        async function handleOrder(e) {
+            e.preventDefault();
+            const colourName = document.getElementById('order-select').value;
+            const qty = parseInt(document.getElementById('order-qty').value);
+
+            showToast("Saving Order to Google Sheet...");
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ action: "logOrder", name: colourName, qty: qty, note: "Purchase Order" })
+                });
+                showToast(`Order logged for ${qty}x ${colourName}`);
+                e.target.reset();
+                document.getElementById('order-qty').value = 1;
+            } catch (err) {
+                showToast("Error logging order");
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('current-time').innerText = `${hours}:${minutes}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        window.onload = () => {
+            fetchLiveStock();
+        };
+    </script>
+</body>
+</html>
